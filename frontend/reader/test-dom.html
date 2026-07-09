@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM 工具库测试</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; }
+        .test-box {
+            border: 2px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .test-box.active {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f9ff;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .animate-box {
+            width: 100px;
+            height: 100px;
+            background: #ef4444;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 DOM 工具库测试</h1>
+
+    <div class="test-box" id="test1">
+        <h3>测试 1: 选择器与元素操作</h3>
+        <button id="btn1">获取元素文本</button>
+        <button id="btn2">设置元素文本</button>
+        <p class="target-text">这是目标文本</p>
+        <div class="result" id="result1"></div>
+    </div>
+
+    <div class="test-box" id="test2">
+        <h3>测试 2: 类名操作</h3>
+        <button id="btn3">添加 active 类</button>
+        <button id="btn4">移除 active 类</button>
+        <button id="btn5">切换 active 类</button>
+        <div class="result" id="result2"></div>
+    </div>
+
+    <div class="test-box" id="test3">
+        <h3>测试 3: CSS 样式操作</h3>
+        <button id="btn6">设置背景色</button>
+        <button id="btn7">获取样式</button>
+        <div id="style-target" style="width: 100px; height: 50px; background: #eee; border-radius: 4px;"></div>
+        <div class="result" id="result3"></div>
+    </div>
+
+    <div class="test-box" id="test4">
+        <h3>测试 4: 动画效果</h3>
+        <button id="btn8">淡入</button>
+        <button id="btn9">淡出</button>
+        <button id="btn10">展开</button>
+        <button id="btn11">收起</button>
+        <div class="animate-box" id="animate-target"></div>
+    </div>
+
+    <div class="test-box" id="test5">
+        <h3>测试 5: 事件绑定</h3>
+        <button id="event-btn1">点击我</button>
+        <button id="event-btn2">点击触发自定义事件</button>
+        <div class="result" id="result5"></div>
+    </div>
+
+    <div class="test-box" id="test6">
+        <h3>测试 6: 工具方法</h3>
+        <button id="btn12">测试防抖</button>
+        <button id="btn13">测试节流</button>
+        <div class="result" id="result6">点击次数: 0 | 实际执行: 0</div>
+    </div>
+
+    <script src="js/dom.js"></script>
+    <script>
+        $(function() {
+            console.log('✅ DOM ready');
+
+            // 测试 1: 选择器与元素操作
+            $('#btn1').click(function() {
+                const text = $('.target-text').text();
+                $('#result1').text('获取到的文本: ' + text);
+            });
+
+            $('#btn2').click(function() {
+                $('.target-text').text('文本已更新 ' + new Date().toLocaleTimeString());
+                $('#result1').text('文本已设置');
+            });
+
+            // 测试 2: 类名操作
+            $('#btn3').click(function() {
+                $('#test2').addClass('active');
+                $('#result2').text('已添加 active 类');
+            });
+
+            $('#btn4').click(function() {
+                $('#test2').removeClass('active');
+                $('#result2').text('已移除 active 类');
+            });
+
+            $('#btn5').click(function() {
+                $('#test2').toggleClass('active');
+                $('#result2').text('当前有 active 类: ' + $('#test2').hasClass('active'));
+            });
+
+            // 测试 3: CSS 样式操作
+            $('#btn6').click(function() {
+                $('#style-target').css({
+                    backgroundColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                    transform: 'scale(' + (0.8 + Math.random() * 0.4) + ')'
+                });
+                $('#result3').text('样式已更新');
+            });
+
+            $('#btn7').click(function() {
+                const bg = $('#style-target').css('backgroundColor');
+                $('#result3').text('背景色: ' + bg);
+            });
+
+            // 测试 4: 动画效果
+            $('#btn8').click(function() {
+                $('#animate-target').fadeIn(500);
+            });
+
+            $('#btn9').click(function() {
+                $('#animate-target').fadeOut(500);
+            });
+
+            $('#btn10').click(function() {
+                $('#animate-target').slideDown(500);
+            });
+
+            $('#btn11').click(function() {
+                $('#animate-target').slideUp(500);
+            });
+
+            // 测试 5: 事件绑定
+            $('#event-btn1').click(function() {
+                $('#result5').text('按钮被点击了! ' + new Date().toLocaleTimeString());
+            });
+
+            $('#event-btn2').click(function() {
+                $('#test5').trigger('customEvent', { data: 'hello' });
+            });
+
+            $('#test5').on('customEvent', function(e) {
+                $('#result5').text('自定义事件被触发! 数据: ' + JSON.stringify(e.detail));
+            });
+
+            // 测试 6: 工具方法
+            let clickCount = 0;
+            let execCount = 0;
+
+            const debouncedFn = $.debounce(function() {
+                execCount++;
+                updateResult6();
+            }, 1000);
+
+            const throttledFn = $.throttle(function() {
+                execCount++;
+                updateResult6();
+            }, 1000);
+
+            function updateResult6() {
+                $('#result6').text(`点击次数: ${clickCount} | 实际执行: ${execCount}`);
+            }
+
+            $('#btn12').click(function() {
+                clickCount++;
+                updateResult6();
+                debouncedFn();
+            });
+
+            $('#btn13').click(function() {
+                clickCount++;
+                updateResult6();
+                throttledFn();
+            });
+
+            console.log('✅ 所有事件绑定完成');
+        });
+    </script>
+</body>
+</html>

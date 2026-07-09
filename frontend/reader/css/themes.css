@@ -1,0 +1,119 @@
+/* 主题切换相关样式 */
+
+/* 背景颜色变体 */
+body[data-bg="#f5f5dc"] {
+    --bg-primary: #f5f5dc;
+    --bg-secondary: #e8e8c8;
+}
+
+body[data-bg="#e8f4e8"] {
+    --bg-primary: #e8f4e8;
+    --bg-secondary: #d8e8d8;
+}
+
+body[data-bg="#f0e8d9"] {
+    --bg-primary: #f0e8d9;
+    --bg-secondary: #e0d8c9;
+}
+
+body[data-bg="#1a1a1a"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #262626;
+    --text-primary: #e5e5e5;
+    --text-secondary: #a3a3a3;
+    --border-color: #404040;
+    --border-light: #333333;
+}
+
+/* 字体大小类 */
+.font-size-14 { font-size: 14px; }
+.font-size-15 { font-size: 15px; }
+.font-size-16 { font-size: 16px; }
+.font-size-17 { font-size: 17px; }
+.font-size-18 { font-size: 18px; }
+.font-size-19 { font-size: 19px; }
+.font-size-20 { font-size: 20px; }
+.font-size-21 { font-size: 21px; }
+.font-size-22 { font-size: 22px; }
+.font-size-23 { font-size: 23px; }
+.font-size-24 { font-size: 24px; }
+.font-size-25 { font-size: 25px; }
+.font-size-26 { font-size: 26px; }
+.font-size-27 { font-size: 27px; }
+.font-size-28 { font-size: 28px; }
+
+/* 行高类 */
+.line-height-1-4 { line-height: 1.4; }
+.line-height-1-5 { line-height: 1.5; }
+.line-height-1-6 { line-height: 1.6; }
+.line-height-1-7 { line-height: 1.7; }
+.line-height-1-8 { line-height: 1.8; }
+.line-height-1-9 { line-height: 1.9; }
+.line-height-2-0 { line-height: 2.0; }
+.line-height-2-1 { line-height: 2.1; }
+.line-height-2-2 { line-height: 2.2; }
+.line-height-2-3 { line-height: 2.3; }
+.line-height-2-4 { line-height: 2.4; }
+.line-height-2-5 { line-height: 2.5; }
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* 选择文本颜色 */
+::selection {
+    background-color: var(--accent-color);
+    color: #ffffff;
+}
+
+/* 选中状态高亮 */
+.highlight {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-radius: 2px;
+}
+
+/* 加载动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-normal) ease-out;
+}
+
+/* 章节切换过渡 */
+.content-transition {
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.content-transition.loading {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
