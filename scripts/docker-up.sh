@@ -33,12 +33,13 @@ fi
 # 选择启动模式
 echo ""
 echo -e "${YELLOW}请选择启动模式:${NC}"
-echo "   1) 完整启动（数据库 + 后端 + Nginx）"
+echo "   1) 完整启动（数据库 + 后端 + Nginx + 管理后台）"
 echo "   2) 仅启动数据库服务"
 echo "   3) 仅启动后端服务"
 echo "   4) 仅启动 Nginx 服务"
+echo "   5) 启动管理后台服务"
 echo ""
-read -p "请输入选项 [1-4]: " start_choice
+read -p "请输入选项 [1-5]: " start_choice
 
 echo ""
 echo -e "${BLUE}🚀 启动服务...${NC}"
@@ -65,10 +66,15 @@ case $start_choice in
         docker compose up -d nginx
         SERVICES="nginx"
         ;;
+    5)
+        echo -e "${BLUE}📦 启动管理后台服务...${NC}"
+        docker compose up -d mongodb redis backend admin
+        SERVICES="mongodb redis backend admin"
+        ;;
     *)
         echo -e "${RED}无效选项，启动所有服务${NC}"
         docker compose up -d
-        SERVICES="mongodb redis backend nginx"
+        SERVICES="mongodb redis backend nginx admin"
         ;;
 esac
 
@@ -117,6 +123,7 @@ echo -e "${PURPLE}🌐 访问地址:${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo -e "   🎨 前端首页:      ${GREEN}http://localhost:6002${NC}"
 echo -e "   📖 阅读器:        ${GREEN}http://localhost:6002/reader/${NC}"
+echo -e "   🔧 管理后台:      ${GREEN}http://localhost:6003${NC}"
 echo -e "   🌐 后端 API:      ${GREEN}http://localhost:6001${NC}"
 echo -e "   🔍 API 健康检查:  ${GREEN}http://localhost:6001/api/health${NC}"
 echo ""

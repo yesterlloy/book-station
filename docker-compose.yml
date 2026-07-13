@@ -132,6 +132,38 @@ services:
           cpus: '0.25'
           memory: 128M
 
+  # 管理后台 - React + Nginx 静态服务
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      target: production
+    container_name: bookstation-admin
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    # 管理后台端口
+    ports:
+      - "${ADMIN_PORT:-6003}:80"
+    networks:
+      - bookstation-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
   # Nginx 反向代理 + 前端静态服务
   nginx:
     image: nginx:1.25-alpine

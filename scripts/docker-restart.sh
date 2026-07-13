@@ -27,8 +27,9 @@ echo "   1) 重启所有服务"
 echo "   2) 仅重启后端服务"
 echo "   3) 仅重启 Nginx 服务"
 echo "   4) 仅重启数据库服务"
+echo "   5) 仅重启管理后台"
 echo ""
-read -p "请输入选项 [1-4]: " restart_choice
+read -p "请输入选项 [1-5]: " restart_choice
 echo ""
 
 case $restart_choice in
@@ -47,6 +48,10 @@ case $restart_choice in
     4)
         echo -e "${BLUE}🔄 重启数据库服务...${NC}"
         docker compose restart mongodb redis
+        ;;
+    5)
+        echo -e "${BLUE}🔄 重启管理后台服务...${NC}"
+        docker compose restart admin
         ;;
     *)
         echo -e "${YELLOW}无效选项，重启所有服务${NC}"
