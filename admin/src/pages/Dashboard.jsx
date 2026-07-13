@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Row, Col, Card, Statistic, Table, Tag, Progress, Spin } from 'antd'
 import {
   UserOutlined,
@@ -7,59 +7,14 @@ import {
   EyeOutlined,
   ArrowUpOutlined,
 } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { useDashboardStore } from '@/store'
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalNovels: 0,
-    totalChapters: 0,
-    totalViews: 0,
-    userGrowth: 0,
-    novelGrowth: 0,
-    chapterGrowth: 0,
-    viewGrowth: 0,
-  })
-
-  const [recentUsers, setRecentUsers] = useState([])
-  const [recentNovels, setRecentNovels] = useState([])
+  const { stats, recentUsers, recentNovels, loading, init } = useDashboardStore()
 
   useEffect(() => {
-    // 模拟数据加载
-    const timer = setTimeout(() => {
-      setStats({
-        totalUsers: 1234,
-        totalNovels: 567,
-        totalChapters: 89012,
-        totalViews: 1234567,
-        userGrowth: 12.5,
-        novelGrowth: 8.3,
-        chapterGrowth: 15.2,
-        viewGrowth: 20.1,
-      })
-
-      setRecentUsers([
-        { id: 1, username: 'user1', email: 'user1@example.com', role: 'user', createdAt: dayjs().subtract(1, 'hour').format() },
-        { id: 2, username: 'user2', email: 'user2@example.com', role: 'author', createdAt: dayjs().subtract(2, 'hour').format() },
-        { id: 3, username: 'user3', email: 'user3@example.com', role: 'user', createdAt: dayjs().subtract(3, 'hour').format() },
-        { id: 4, username: 'user4', email: 'user4@example.com', role: 'user', createdAt: dayjs().subtract(5, 'hour').format() },
-        { id: 5, username: 'user5', email: 'user5@example.com', role: 'author', createdAt: dayjs().subtract(8, 'hour').format() },
-      ])
-
-      setRecentNovels([
-        { id: 1, title: '斗破苍穹', author: '天蚕土豆', category: '玄幻', chapters: 1623, views: 123456 },
-        { id: 2, title: '完美世界', author: '辰东', category: '玄幻', chapters: 1200, views: 98765 },
-        { id: 3, title: '凡人修仙传', author: '忘语', category: '武侠', chapters: 1800, views: 87654 },
-        { id: 4, title: '盗墓笔记', author: '南派三叔', category: '悬疑', chapters: 350, views: 76543 },
-        { id: 5, title: '三体', author: '刘慈欣', category: '科幻', chapters: 80, views: 65432 },
-      ])
-
-      setLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [])
+    init()
+  }, [init])
 
   const statCards = [
     {
@@ -117,7 +72,6 @@ const Dashboard = () => {
       title: '注册时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (time) => dayjs(time).format('YYYY-MM-DD HH:mm'),
     },
   ]
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import {
   Table,
   Button,
@@ -24,98 +24,76 @@ import {
   SearchOutlined,
   ReloadOutlined,
   UploadOutlined,
-  EyeOutlined,
   BookOutlined,
 } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { useBookStore } from '@/store'
 
 const { Option } = Select
 const { TextArea } = Input
 
 const BookManagement = () => {
-  const [loading, setLoading] = useState(false)
-  const [data, setData] = useState([])
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
-  const [searchForm] = Form.useForm()
-  const [modalVisible, setModalVisible] = useState(false)
-  const [editingBook, setEditingBook] = useState(null)
+  const {
+    novels,
+    selectedNovel,
+    chapters,
+    loading,
+    submitting,
+    pagination,
+    searchParams,
+    modalVisible,
+    chapterModalVisible,
+    fetchNovels,
+    setSearchParams,
+    resetSearch,
+    setPagination,
+    openModal,
+    closeModal,
+    openChapterModal,
+    closeChapterModal,
+    createNovel,
+    updateNovel,
+    deleteNovel,
+  } = useBookStore()
+
   const [form] = Form.useForm()
-  const [chapterModalVisible, setChapterModalVisible] = useState(false)
-  const [currentNovel, setCurrentNovel] = useState(null)
-
-  // 模拟小说数据
-  const mockNovels = [
-    { id: 1, title: '斗破苍穹', author: '天蚕土豆', category: '玄幻', status: 'serializing', isHot: true, chapterCount: 1623, wordCount: 5300000, cover: '', description: '这里是属于斗气的世界，没有花俏艳丽的魔法，有的，仅仅是繁衍到巅峰的斗气！', createdAt: '2024-01-01 10:00:00' },
-    { id: 2, title: '完美世界', author: '辰东', category: '玄幻', status: 'completed', isHot: true, chapterCount: 1200, wordCount: 4200000, cover: '', description: '一粒尘可填海，一根草斩尽日月星辰，弹指间天翻地覆。', createdAt: '2024-01-02 10:00:00' },
-    { id: 3, title: '凡人修仙传', author: '忘语', category: '武侠', status: 'completed', isHot: true, chapterCount: 1800, wordCount: 6100000, cover: '', description: '凡人流开山之作，讲述一个普通山村少年的修仙之路。', createdAt: '2024-01-03 10:00:00' },
-    { id: 4, title: '盗墓笔记', author: '南派三叔', category: '悬疑', status: 'completed', isHot: false, chapterCount: 350, wordCount: 1500000, cover: '', description: '五十年前，一群长沙土夫子（盗墓贼）挖到了一件战国古墓。', createdAt: '2024-01-04 10:00:00' },
-    { id: 5, title: '三体', author: '刘慈欣', category: '科幻', status: 'completed', isHot: true, chapterCount: 80, wordCount: 300000, cover: '', description: '文化大革命如火如荼进行的同时，军方探寻外星文明的绝秘计划"红岸工程"取得了突破性进展。', createdAt: '2024-01-05 10:00:00' },
-    { id: 6, title: '全职高手', author: '蝴蝶蓝', category: '其他', status: 'completed', isHot: false, chapterCount: 1728, wordCount: 5500000, cover: '', description: '网游荣耀中被誉为教科书级别的顶尖高手叶修，重新返回职业赛场的故事。', createdAt: '2024-01-06 10:00:00' },
-  ]
-
-  // 模拟章节数据
-  const mockChapters = [
-    { id: 1, order: 1, title: '第一章 陨落的天才', wordCount: 3500, isFree: true, createdAt: '2024-01-01 10:00:00' },
-    { id: 2, order: 2, title: '第二章 斗之气', wordCount: 3200, isFree: true, createdAt: '2024-01-01 10:05:00' },
-    { id: 3, order: 3, title: '第三章 客人', wordCount: 3800, isFree: true, createdAt: '2024-01-01 10:10:00' },
-    { id: 4, order: 4, title: '第四章 纳兰嫣然', wordCount: 4000, isFree: false, createdAt: '2024-01-01 10:15:00' },
-    { id: 5, order: 5, title: '第五章 聚气散', wordCount: 3600, isFree: false, createdAt: '2024-01-01 10:20:00' },
-  ]
+  const [searchForm] = Form.useForm()
 
   useEffect(() => {
-    loadData()
-  }, [pagination.current, pagination.pageSize])
-
-  const loadData = async () => {
-    setLoading(true)
-    setTimeout(() => {
-      setData(mockNovels)
-      setPagination({ ...pagination, total: mockNovels.length })
-      setLoading(false)
-    }, 500)
-  }
+    fetchNovels()
+  }, [fetchNovels, searchParams, pagination.current, pagination.pageSize])
 
   const handleSearch = () => {
-    loadData()
+    const values = searchForm.getFieldsValue()
+    setSearchParams(values)
   }
 
   const handleReset = () => {
     searchForm.resetFields()
-    loadData()
-  }
-
-  const handleCreate = () => {
-    setEditingBook(null)
-    form.resetFields()
-    setModalVisible(true)
-  }
-
-  const handleEdit = (record) => {
-    setEditingBook(record)
-    form.setFieldsValue(record)
-    setModalVisible(true)
-  }
-
-  const handleDelete = async (id) => {
-    message.success('删除成功')
-    loadData()
+    resetSearch()
   }
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields()
-      console.log('小说数据:', values)
-      message.success(editingBook ? '更新成功' : '创建成功')
-      setModalVisible(false)
-      loadData()
+
+      if (selectedNovel) {
+        await updateNovel(selectedNovel.id, values)
+        message.success('更新小说成功')
+      } else {
+        await createNovel(values)
+        message.success('创建小说成功')
+      }
+
+      closeModal()
+      form.resetFields()
     } catch (error) {
       console.error('表单验证失败:', error)
     }
   }
 
-  const handleManageChapters = (record) => {
-    setCurrentNovel(record)
-    setChapterModalVisible(true)
+  const handleDeleteConfirm = async (id) => {
+    await deleteNovel(id)
+    message.success('删除成功')
   }
 
   const chapterColumns = [
@@ -149,7 +127,6 @@ const BookManagement = () => {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (time) => dayjs(time).format('YYYY-MM-DD HH:mm'),
     },
     {
       title: '操作',
@@ -157,13 +134,13 @@ const BookManagement = () => {
       width: 150,
       render: (_, record) => (
         <Space size="small">
-          <Button type="link" size="small" icon={<EyeOutlined />}>
+          <Button type="link" size="small" icon={<BookOutlined />}>
             预览
           </Button>
           <Button type="link" size="small" icon={<EditOutlined />}>
             编辑
           </Button>
-          <Popconfirm title="确定删除？" onConfirm={() => console.log('删除章节', record.id)}>
+          <Popconfirm title="确定删除？">
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
               删除
             </Button>
@@ -256,7 +233,6 @@ const BookManagement = () => {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (time) => dayjs(time).format('YYYY-MM-DD'),
     },
     {
       title: '操作',
@@ -268,7 +244,7 @@ const BookManagement = () => {
             type="link"
             size="small"
             icon={<BookOutlined />}
-            onClick={() => handleManageChapters(record)}
+            onClick={() => openChapterModal(record)}
           >
             章节
           </Button>
@@ -276,13 +252,16 @@ const BookManagement = () => {
             type="link"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={() => {
+              form.setFieldsValue(record)
+              openModal(record)
+            }}
           >
             编辑
           </Button>
           <Popconfirm
             title="确定要删除这本小说吗？"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDeleteConfirm(record.id)}
             okText="确定"
             cancelText="取消"
           >
@@ -336,7 +315,7 @@ const BookManagement = () => {
                 <Button icon={<ReloadOutlined />} onClick={handleReset}>
                   重置
                 </Button>
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
                   新增小说
                 </Button>
               </Space>
@@ -348,7 +327,7 @@ const BookManagement = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={novels}
           rowKey="id"
           loading={loading}
           pagination={{
@@ -356,19 +335,23 @@ const BookManagement = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
           }}
-          onChange={(page, pageSize) => setPagination({ ...pagination, current: page, pageSize })}
         />
       </Card>
 
       {/* 小说编辑/新增弹窗 */}
       <Modal
-        title={editingBook ? '编辑小说' : '新增小说'}
+        title={selectedNovel ? '编辑小说' : '新增小说'}
         open={modalVisible}
         onOk={handleModalOk}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => {
+          closeModal()
+          form.resetFields()
+        }}
         width={700}
         destroyOnClose
+        confirmLoading={submitting}
       >
         <Form form={form} layout="vertical" className="form-card">
           <Row gutter={16}>
@@ -461,11 +444,11 @@ const BookManagement = () => {
 
       {/* 章节管理弹窗 */}
       <Modal
-        title={`章节管理 - ${currentNovel?.title}`}
+        title={`章节管理 - ${selectedNovel?.title}`}
         open={chapterModalVisible}
-        onCancel={() => setChapterModalVisible(false)}
+        onCancel={() => closeChapterModal()}
         footer={[
-          <Button key="close" onClick={() => setChapterModalVisible(false)}>
+          <Button key="close" onClick={() => closeChapterModal()}>
             关闭
           </Button>,
           <Button key="add" type="primary" icon={<PlusOutlined />}>
@@ -476,7 +459,7 @@ const BookManagement = () => {
       >
         <Table
           columns={chapterColumns}
-          dataSource={mockChapters}
+          dataSource={chapters}
           rowKey="id"
           pagination={false}
           size="small"

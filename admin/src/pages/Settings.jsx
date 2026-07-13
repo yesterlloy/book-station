@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import {
   Card,
   Form,
@@ -11,29 +11,51 @@ import {
   Row,
   Col,
   message,
-  Divider,
   Alert,
 } from 'antd'
 import { SaveOutlined } from '@ant-design/icons'
+import { useSettingsStore } from '@/store'
 
 const { Option } = Select
 const { TextArea } = Input
 
 const Settings = () => {
-  const [loading, setLoading] = useState(false)
+  const {
+    generalSettings,
+    contentSettings,
+    securitySettings,
+    submitting,
+    init,
+    updateGeneralSettings,
+    updateContentSettings,
+    updateSecuritySettings,
+  } = useSettingsStore()
+
   const [generalForm] = Form.useForm()
   const [contentForm] = Form.useForm()
   const [securityForm] = Form.useForm()
 
+  useEffect(() => {
+    init()
+  }, [init])
+
+  useEffect(() => {
+    generalForm.setFieldsValue(generalSettings)
+  }, [generalSettings, generalForm])
+
+  useEffect(() => {
+    contentForm.setFieldsValue(contentSettings)
+  }, [contentSettings, contentForm])
+
+  useEffect(() => {
+    securityForm.setFieldsValue(securitySettings)
+  }, [securitySettings, securityForm])
+
   const handleGeneralSave = async () => {
     try {
       const values = await generalForm.validateFields()
-      setLoading(true)
-      console.log('保存通用设置:', values)
-      setTimeout(() => {
-        message.success('设置保存成功')
-        setLoading(false)
-      }, 500)
+      await updateGeneralSettings(values)
+      message.success('通用设置保存成功')
     } catch (error) {
       console.error('表单验证失败:', error)
     }
@@ -42,12 +64,8 @@ const Settings = () => {
   const handleContentSave = async () => {
     try {
       const values = await contentForm.validateFields()
-      setLoading(true)
-      console.log('保存内容设置:', values)
-      setTimeout(() => {
-        message.success('设置保存成功')
-        setLoading(false)
-      }, 500)
+      await updateContentSettings(values)
+      message.success('内容设置保存成功')
     } catch (error) {
       console.error('表单验证失败:', error)
     }
@@ -56,12 +74,8 @@ const Settings = () => {
   const handleSecuritySave = async () => {
     try {
       const values = await securityForm.validateFields()
-      setLoading(true)
-      console.log('保存安全设置:', values)
-      setTimeout(() => {
-        message.success('设置保存成功')
-        setLoading(false)
-      }, 500)
+      await updateSecuritySettings(values)
+      message.success('安全设置保存成功')
     } catch (error) {
       console.error('表单验证失败:', error)
     }
@@ -75,14 +89,7 @@ const Settings = () => {
         <Form
           form={generalForm}
           layout="vertical"
-          initialValues={{
-            siteName: 'BookStation',
-            siteDescription: '纯净、极速、无广告的小说阅读平台',
-            siteUrl: 'https://bookstation.com',
-            enableRegistration: true,
-            enableComment: true,
-            defaultAvatar: '',
-          }}
+          initialValues={generalSettings}
         >
           <Row gutter={24}>
             <Col xs={24} lg={12}>
@@ -112,7 +119,12 @@ const Settings = () => {
             <TextArea rows={3} placeholder="请输入网站描述" maxLength={500} showCount />
           </Form.Item>
 
-          <Divider />
+          <Alert
+            message="功能开关配置"
+            type="info"
+            showIcon
+            style={{ marginBottom: 24 }}
+          />
 
           <Row gutter={24}>
             <Col xs={24} lg={8}>
@@ -138,7 +150,6 @@ const Settings = () => {
                 name="enableRecommend"
                 label="推荐功能"
                 valuePropName="checked"
-                initialValue={true}
               >
                 <Switch />
               </Form.Item>
@@ -146,7 +157,12 @@ const Settings = () => {
           </Row>
 
           <Form.Item>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleGeneralSave} loading={loading}>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleGeneralSave}
+              loading={submitting}
+            >
               保存设置
             </Button>
           </Form.Item>
@@ -160,15 +176,7 @@ const Settings = () => {
         <Form
           form={contentForm}
           layout="vertical"
-          initialValues={{
-            hotNovelCount: 10,
-            newNovelCount: 20,
-            recommendNovelCount: 15,
-            freeChapterCount: 10,
-            chapterPerPage: 50,
-            enableCrawler: true,
-            autoCrawl: false,
-          }}
+          initialValues={contentSettings}
         >
           <Alert
             message="以下设置将影响前端展示的数据量和爬虫行为"
@@ -229,7 +237,12 @@ const Settings = () => {
             </Col>
           </Row>
 
-          <Divider />
+          <Alert
+            message="爬虫配置"
+            type="warning"
+            showIcon
+            style={{ marginBottom: 24, marginTop: 24 }}
+          />
 
           <Row gutter={24}>
             <Col xs={24} lg={8}>
@@ -262,7 +275,12 @@ const Settings = () => {
           </Row>
 
           <Form.Item>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleContentSave} loading={loading}>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleContentSave}
+              loading={submitting}
+            >
               保存设置
             </Button>
           </Form.Item>
@@ -276,14 +294,7 @@ const Settings = () => {
         <Form
           form={securityForm}
           layout="vertical"
-          initialValues={{
-            enableCaptcha: true,
-            maxLoginAttempts: 5,
-            lockoutDuration: 30,
-            sessionTimeout: 24,
-            passwordMinLength: 6,
-            enableTwoFactor: false,
-          }}
+          initialValues={securitySettings}
         >
           <Alert
             message="安全设置将影响用户登录和系统安全性，修改后请谨慎确认"
@@ -355,7 +366,12 @@ const Settings = () => {
             </Col>
           </Row>
 
-          <Divider />
+          <Alert
+            message="高级安全配置"
+            type="error"
+            showIcon
+            style={{ marginBottom: 24, marginTop: 24 }}
+          />
 
           <Row gutter={24}>
             <Col xs={24} lg={8}>
@@ -368,7 +384,7 @@ const Settings = () => {
                 <Switch />
               </Form.Item>
             </Col>
-            <Col xs={24} lg={8}>
+            <Col xs={24} lg={16}>
               <Form.Item
                 name="ipWhitelist"
                 label="IP白名单"
@@ -380,7 +396,12 @@ const Settings = () => {
           </Row>
 
           <Form.Item>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSecuritySave} loading={loading}>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSecuritySave}
+              loading={submitting}
+            >
               保存设置
             </Button>
           </Form.Item>

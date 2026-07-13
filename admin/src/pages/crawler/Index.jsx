@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import {
   Table,
   Button,
@@ -31,120 +31,88 @@ import {
   StopOutlined,
   SafetyOutlined,
   BugOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
 } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { useCrawlerStore } from '@/store'
 
 const { Option } = Select
 const { Panel } = Collapse
 const { TextArea } = Input
 
 const CrawlerManagement = () => {
-  const [loading, setLoading] = useState(false)
-  const [crawlerList, setCrawlerList] = useState([])
-  const [taskList, setTaskList] = useState([])
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
-  const [searchForm] = Form.useForm()
-  const [modalVisible, setModalVisible] = useState(false)
-  const [editingCrawler, setEditingCrawler] = useState(null)
+  const {
+    crawlers,
+    tasks,
+    selectedCrawler,
+    currentTask,
+    logs,
+    loading,
+    searchParams,
+    modalVisible,
+    logModalVisible,
+    stats,
+    fetchCrawlers,
+    setSearchParams,
+    refresh,
+    openModal,
+    closeModal,
+    openLogModal,
+    closeLogModal,
+    startCrawler,
+    stopCrawler,
+    testCrawler,
+    createCrawler,
+    updateCrawler,
+    deleteCrawler,
+  } = useCrawlerStore()
+
   const [form] = Form.useForm()
-  const [logModalVisible, setLogModalVisible] = useState(false)
-  const [currentTask, setCurrentTask] = useState(null)
-  const [logs, setLogs] = useState([])
-
-  // 模拟爬虫数据
-  const mockCrawlers = [
-    { id: 1, name: '起点中文网爬虫', source: 'qidian', status: 'running', concurrency: 5, delay: 1000, totalBooks: 156, totalChapters: 45632, lastRun: '2024-01-10 15:30:00', createdAt: '2024-01-01 10:00:00' },
-    { id: 2, name: '笔趣阁爬虫', source: 'biquge', status: 'stopped', concurrency: 3, delay: 1500, totalBooks: 89, totalChapters: 23456, lastRun: '2024-01-09 18:20:00', createdAt: '2024-01-02 10:00:00' },
-    { id: 3, name: '番茄小说爬虫', source: 'fanqie', status: 'running', concurrency: 8, delay: 800, totalBooks: 234, totalChapters: 67890, lastRun: '2024-01-10 16:00:00', createdAt: '2024-01-03 10:00:00' },
-    { id: 4, name: '纵横中文网爬虫', source: 'zongheng', status: 'error', concurrency: 4, delay: 1200, totalBooks: 45, totalChapters: 12345, lastRun: '2024-01-08 12:00:00', createdAt: '2024-01-04 10:00:00' },
-  ]
-
-  // 模拟任务数据
-  const mockTasks = [
-    { id: 1, crawlerId: 1, crawlerName: '起点中文网爬虫', status: 'completed', progress: 100, total: 500, success: 495, failed: 5, createdAt: '2024-01-10 15:30:00', completedAt: '2024-01-10 16:45:00' },
-    { id: 2, crawlerId: 3, crawlerName: '番茄小说爬虫', status: 'running', progress: 68, total: 1000, success: 680, failed: 0, createdAt: '2024-01-10 16:00:00', completedAt: null },
-    { id: 3, crawlerId: 2, crawlerName: '笔趣阁爬虫', status: 'failed', progress: 35, total: 800, success: 280, failed: 120, createdAt: '2024-01-09 18:20:00', completedAt: null },
-    { id: 4, crawlerId: 1, crawlerName: '起点中文网爬虫', status: 'completed', progress: 100, total: 300, success: 298, failed: 2, createdAt: '2024-01-09 10:00:00', completedAt: '2024-01-09 11:30:00' },
-  ]
-
-  // 模拟日志数据
-  const mockLogs = [
-    { time: '2024-01-10 16:00:00', level: 'info', message: '爬虫任务开始执行' },
-    { time: '2024-01-10 16:00:05', level: 'info', message: '正在抓取小说列表...' },
-    { time: '2024-01-10 16:00:10', level: 'info', message: '已获取 100 本小说信息' },
-    { time: '2024-01-10 16:00:15', level: 'success', message: '成功抓取: 斗破苍穹' },
-    { time: '2024-01-10 16:00:20', level: 'success', message: '成功抓取: 完美世界' },
-    { time: '2024-01-10 16:00:25', level: 'warning', message: '小说《测试小说》内容为空，跳过' },
-    { time: '2024-01-10 16:00:30', level: 'success', message: '成功抓取: 凡人修仙传' },
-    { time: '2024-01-10 16:00:35', level: 'info', message: '正在抓取章节内容...' },
-    { time: '2024-01-10 16:00:40', level: 'success', message: '成功抓取章节: 第1章 陨落的天才' },
-    { time: '2024-01-10 16:00:45', level: 'success', message: '成功抓取章节: 第2章 斗之气' },
-  ]
+  const [searchForm] = Form.useForm()
 
   useEffect(() => {
-    loadData()
-  }, [pagination.current, pagination.pageSize])
-
-  const loadData = async () => {
-    setLoading(true)
-    setTimeout(() => {
-      setCrawlerList(mockCrawlers)
-      setTaskList(mockTasks)
-      setLogs(mockLogs)
-      setPagination({ ...pagination, total: mockCrawlers.length })
-      setLoading(false)
-    }, 500)
-  }
+    fetchCrawlers()
+  }, [fetchCrawlers, searchParams])
 
   const handleStart = async (record) => {
+    await startCrawler(record.id)
     message.success(`爬虫 ${record.name} 已启动`)
-    loadData()
   }
 
   const handleStop = async (record) => {
+    await stopCrawler(record.id)
     message.success(`爬虫 ${record.name} 已停止`)
-    loadData()
   }
 
   const handleTest = async (record) => {
-    message.success(`数据源 ${record.name} 连接成功`)
-  }
-
-  const handleCreate = () => {
-    setEditingCrawler(null)
-    form.resetFields()
-    setModalVisible(true)
-  }
-
-  const handleEdit = (record) => {
-    setEditingCrawler(record)
-    form.setFieldsValue(record)
-    setModalVisible(true)
-  }
-
-  const handleDelete = async (id) => {
-    message.success('删除成功')
-    loadData()
+    try {
+      await testCrawler(record.id)
+      message.success(`数据源 ${record.name} 连接成功`)
+    } catch (error) {
+      message.error(`数据源 ${record.name} 连接失败`)
+    }
   }
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields()
-      console.log('爬虫配置:', values)
-      message.success(editingCrawler ? '更新成功' : '创建成功')
-      setModalVisible(false)
-      loadData()
+
+      if (selectedCrawler) {
+        await updateCrawler(selectedCrawler.id, values)
+        message.success('更新爬虫成功')
+      } else {
+        await createCrawler(values)
+        message.success('创建爬虫成功')
+      }
+
+      closeModal()
+      form.resetFields()
     } catch (error) {
       console.error('表单验证失败:', error)
     }
   }
 
-  const handleViewLogs = (task) => {
-    setCurrentTask(task)
-    setLogModalVisible(true)
+  const handleDeleteConfirm = async (id) => {
+    await deleteCrawler(id)
+    message.success('删除成功')
   }
 
   const getStatusColor = (status) => {
@@ -169,6 +137,13 @@ const CrawlerManagement = () => {
       pending: '等待中',
     }
     return textMap[status] || status
+  }
+
+  const logLevelIcon = {
+    info: <span style={{ color: '#1890ff' }}>ℹ</span>,
+    success: <span style={{ color: '#52c41a' }}>✓</span>,
+    warning: <span style={{ color: '#faad14' }}>⚠</span>,
+    error: <span style={{ color: '#ff4d4f' }}>✗</span>,
   }
 
   const crawlerColumns = [
@@ -220,7 +195,6 @@ const CrawlerManagement = () => {
       title: '最后运行',
       dataIndex: 'lastRun',
       key: 'lastRun',
-      render: (time) => dayjs(time).format('MM-DD HH:mm'),
     },
     {
       title: '操作',
@@ -260,13 +234,16 @@ const CrawlerManagement = () => {
             type="link"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={() => {
+              form.setFieldsValue(record)
+              openModal(record)
+            }}
           >
             编辑
           </Button>
           <Popconfirm
             title="确定要删除这个爬虫吗？"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDeleteConfirm(record.id)}
             okText="确定"
             cancelText="取消"
           >
@@ -328,7 +305,6 @@ const CrawlerManagement = () => {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (time) => dayjs(time).format('MM-DD HH:mm'),
     },
     {
       title: '操作',
@@ -339,20 +315,13 @@ const CrawlerManagement = () => {
           type="link"
           size="small"
           icon={<BugOutlined />}
-          onClick={() => handleViewLogs(record)}
+          onClick={() => openLogModal(record)}
         >
           查看日志
         </Button>
       ),
     },
   ]
-
-  const logLevelIcon = {
-    info: <ExclamationCircleOutlined style={{ color: '#1890ff' }} />,
-    success: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
-    warning: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
-    error: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
-  }
 
   return (
     <div>
@@ -364,7 +333,7 @@ const CrawlerManagement = () => {
           <Card>
             <Statistic
               title="运行中"
-              value={crawlerList.filter(c => c.status === 'running').length}
+              value={stats.runningCount}
               valueStyle={{ color: '#1890ff' }}
               prefix={<PlayCircleOutlined />}
             />
@@ -374,7 +343,7 @@ const CrawlerManagement = () => {
           <Card>
             <Statistic
               title="抓取小说总数"
-              value={crawlerList.reduce((sum, c) => sum + c.totalBooks, 0)}
+              value={stats.totalBooks}
               valueStyle={{ color: '#52c41a' }}
               prefix={<BookOutlined />}
             />
@@ -384,7 +353,7 @@ const CrawlerManagement = () => {
           <Card>
             <Statistic
               title="抓取章节总数"
-              value={crawlerList.reduce((sum, c) => sum + c.totalChapters, 0)}
+              value={stats.totalChapters}
               valueStyle={{ color: '#722ed1' }}
               prefix={<FileTextOutlined />}
             />
@@ -394,7 +363,7 @@ const CrawlerManagement = () => {
           <Card>
             <Statistic
               title="今日任务数"
-              value={taskList.filter(t => dayjs(t.createdAt).isSame(dayjs(), 'day')).length}
+              value={stats.todayTasks}
               valueStyle={{ color: '#fa8c16' }}
               prefix={<ClockCircleOutlined />}
             />
@@ -423,13 +392,13 @@ const CrawlerManagement = () => {
                 </Col>
                 <Col>
                   <Space>
-                    <Button type="primary" icon={<SearchOutlined />} onClick={loadData}>
+                    <Button type="primary" icon={<SearchOutlined />} onClick={fetchCrawlers}>
                       搜索
                     </Button>
-                    <Button icon={<ReloadOutlined />} onClick={loadData}>
+                    <Button icon={<ReloadOutlined />} onClick={refresh}>
                       刷新
                     </Button>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
                       新增爬虫
                     </Button>
                   </Space>
@@ -439,7 +408,7 @@ const CrawlerManagement = () => {
 
             <Table
               columns={crawlerColumns}
-              dataSource={crawlerList}
+              dataSource={crawlers}
               rowKey="id"
               loading={loading}
               pagination={false}
@@ -451,7 +420,7 @@ const CrawlerManagement = () => {
           <Card>
             <Table
               columns={taskColumns}
-              dataSource={taskList}
+              dataSource={tasks}
               rowKey="id"
               pagination={{
                 pageSize: 10,
@@ -466,12 +435,16 @@ const CrawlerManagement = () => {
 
       {/* 爬虫编辑/新增弹窗 */}
       <Modal
-        title={editingCrawler ? '编辑爬虫' : '新增爬虫'}
+        title={selectedCrawler ? '编辑爬虫' : '新增爬虫'}
         open={modalVisible}
         onOk={handleModalOk}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => {
+          closeModal()
+          form.resetFields()
+        }}
         width={700}
         destroyOnClose
+        confirmLoading={loading}
       >
         <Form form={form} layout="vertical" className="form-card">
           <Form.Item
@@ -550,9 +523,9 @@ const CrawlerManagement = () => {
       <Modal
         title={`任务日志 - ${currentTask?.crawlerName}`}
         open={logModalVisible}
-        onCancel={() => setLogModalVisible(false)}
+        onCancel={() => closeLogModal()}
         footer={[
-          <Button key="close" onClick={() => setLogModalVisible(false)}>
+          <Button key="close" onClick={() => closeLogModal()}>
             关闭
           </Button>,
         ]}

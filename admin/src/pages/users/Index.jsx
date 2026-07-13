@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import {
   Table,
   Button,
@@ -22,107 +22,75 @@ import {
   ReloadOutlined,
   LockOutlined,
 } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { useUserStore } from '@/store'
 
 const { Option } = Select
 
 const UserManagement = () => {
-  const [loading, setLoading] = useState(false)
-  const [data, setData] = useState([])
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
-  const [searchForm] = Form.useForm()
-  const [modalVisible, setModalVisible] = useState(false)
-  const [modalType, setModalType] = useState('create') // create | edit | resetPassword
-  const [editingUser, setEditingUser] = useState(null)
-  const [form] = Form.useForm()
+  const {
+    users,
+    loading,
+    submitting,
+    pagination,
+    searchParams,
+    modalVisible,
+    modalType,
+    selectedUser,
+    fetchUsers,
+    setSearchParams,
+    resetSearch,
+    setPagination,
+    openModal,
+    closeModal,
+    createUser,
+    updateUser,
+    deleteUser,
+    updateUserStatus,
+    resetPassword,
+  } = useUserStore()
 
-  // 模拟用户数据
-  const mockUsers = [
-    { id: 1, username: 'admin', email: 'admin@bookstation.com', role: 'admin', status: 'active', nickname: '超级管理员', createdAt: '2024-01-01 10:00:00' },
-    { id: 2, username: 'author1', email: 'author1@bookstation.com', role: 'author', status: 'active', nickname: '天蚕土豆', createdAt: '2024-01-02 10:00:00' },
-    { id: 3, username: 'author2', email: 'author2@bookstation.com', role: 'author', status: 'active', nickname: '刘慈欣', createdAt: '2024-01-03 10:00:00' },
-    { id: 4, username: 'user1', email: 'user1@example.com', role: 'user', status: 'active', nickname: '读者1号', createdAt: '2024-01-04 10:00:00' },
-    { id: 5, username: 'user2', email: 'user2@example.com', role: 'user', status: 'active', nickname: '读者2号', createdAt: '2024-01-05 10:00:00' },
-    { id: 6, username: 'user3', email: 'user3@example.com', role: 'user', status: 'banned', nickname: '违规用户', createdAt: '2024-01-06 10:00:00' },
-    { id: 7, username: 'user4', email: 'user4@example.com', role: 'user', status: 'active', nickname: '用户4', createdAt: '2024-01-07 10:00:00' },
-    { id: 8, username: 'user5', email: 'user5@example.com', role: 'user', status: 'active', nickname: '用户5', createdAt: '2024-01-08 10:00:00' },
-  ]
+  const [form] = Form.useForm()
+  const [searchForm] = Form.useForm()
 
   useEffect(() => {
-    loadData()
-  }, [pagination.current, pagination.pageSize])
-
-  const loadData = async () => {
-    setLoading(true)
-    // 模拟 API 调用
-    setTimeout(() => {
-      setData(mockUsers)
-      setPagination({ ...pagination, total: mockUsers.length })
-      setLoading(false)
-    }, 500)
-  }
+    fetchUsers()
+  }, [fetchUsers, searchParams, pagination.current, pagination.pageSize])
 
   const handleSearch = () => {
     const values = searchForm.getFieldsValue()
-    console.log('搜索条件:', values)
-    loadData()
+    setSearchParams(values)
   }
 
   const handleReset = () => {
     searchForm.resetFields()
-    loadData()
-  }
-
-  const handleCreate = () => {
-    setModalType('create')
-    setEditingUser(null)
-    form.resetFields()
-    setModalVisible(true)
-  }
-
-  const handleEdit = (record) => {
-    setModalType('edit')
-    setEditingUser(record)
-    form.setFieldsValue(record)
-    setModalVisible(true)
-  }
-
-  const handleResetPassword = (record) => {
-    setModalType('resetPassword')
-    setEditingUser(record)
-    form.resetFields()
-    setModalVisible(true)
-  }
-
-  const handleDelete = async (id) => {
-    message.success('删除成功')
-    loadData()
+    resetSearch()
   }
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields()
-      console.log('表单数据:', values)
 
       if (modalType === 'create') {
+        await createUser(values)
         message.success('创建用户成功')
       } else if (modalType === 'edit') {
+        await updateUser(selectedUser.id, values)
         message.success('更新用户成功')
       } else if (modalType === 'resetPassword') {
+        await resetPassword(selectedUser.id, values.newPassword)
         message.success('密码重置成功')
       }
 
-      setModalVisible(false)
-      loadData()
+      closeModal()
+      form.resetFields()
     } catch (error) {
       console.error('表单验证失败:', error)
     }
   }
 
-  const handleStatusChange = async (record, status) => {
-    console.log('更新状态:', record.id, status)
-    message.success('状态更新成功')
-    loadData()
+  const handleDeleteConfirm = async (id) => {
+    await deleteUser(id)
+    message.success('删除成功')
   }
 
   const columns = [
@@ -170,7 +138,7 @@ const UserManagement = () => {
           value={status}
           style={{ width: 100 }}
           size="small"
-          onChange={(value) => handleStatusChange(record, value)}
+          onChange={(value) => updateUserStatus(record.id, value)}
         >
           <Option value="active">正常</Option>
           <Option value="banned">封禁</Option>
@@ -182,7 +150,6 @@ const UserManagement = () => {
       title: '注册时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (time) => dayjs(time).format('YYYY-MM-DD HH:mm'),
     },
     {
       title: '操作',
@@ -194,7 +161,10 @@ const UserManagement = () => {
             type="link"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={() => {
+              form.setFieldsValue(record)
+              openModal('edit', record)
+            }}
           >
             编辑
           </Button>
@@ -202,14 +172,14 @@ const UserManagement = () => {
             type="link"
             size="small"
             icon={<LockOutlined />}
-            onClick={() => handleResetPassword(record)}
+            onClick={() => openModal('resetPassword', record)}
           >
             重置密码
           </Button>
           {record.role !== 'admin' && (
             <Popconfirm
               title="确定要删除这个用户吗？"
-              onConfirm={() => handleDelete(record.id)}
+              onConfirm={() => handleDeleteConfirm(record.id)}
               okText="确定"
               cancelText="取消"
             >
@@ -261,7 +231,7 @@ const UserManagement = () => {
                 <Button icon={<ReloadOutlined />} onClick={handleReset}>
                   重置
                 </Button>
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal('create')}>
                   新增用户
                 </Button>
               </Space>
@@ -273,7 +243,7 @@ const UserManagement = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={users}
           rowKey="id"
           loading={loading}
           pagination={{
@@ -281,8 +251,8 @@ const UserManagement = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
           }}
-          onChange={(page, pageSize) => setPagination({ ...pagination, current: page, pageSize })}
         />
       </Card>
 
@@ -290,9 +260,13 @@ const UserManagement = () => {
         title={modalType === 'create' ? '新增用户' : modalType === 'edit' ? '编辑用户' : '重置密码'}
         open={modalVisible}
         onOk={handleModalOk}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => {
+          closeModal()
+          form.resetFields()
+        }}
         width={600}
         destroyOnClose
+        confirmLoading={submitting}
       >
         <Form form={form} layout="vertical" className="form-card">
           {modalType !== 'resetPassword' && (
@@ -354,7 +328,7 @@ const UserManagement = () => {
           {modalType === 'resetPassword' && (
             <>
               <Form.Item label="当前用户">
-                <Input value={editingUser?.username} disabled />
+                <Input value={selectedUser?.username} disabled />
               </Form.Item>
               <Form.Item
                 name="newPassword"
