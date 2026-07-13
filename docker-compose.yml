@@ -148,6 +148,7 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./frontend:/var/www/frontend:ro
       - ./frontend/reader:/var/www/reader:ro
+      - ./admin/dist:/var/www/admin:ro
       - ./docker/nginx/logs:/var/log/nginx
       - ./docker/nginx/ssl:/etc/nginx/ssl:ro
       # 缓存目录
