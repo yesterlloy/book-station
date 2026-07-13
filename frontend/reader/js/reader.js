@@ -45,6 +45,8 @@ $(function() {
             this.$lineHeightSlider = $('#lineHeightSlider');
             this.$lineHeightValue = $('#lineHeightValue');
             this.$autoSaveCheckbox = $('#autoSaveProgress');
+            this.$prevBtn = $('#prevChapter');
+            this.$nextBtn = $('#nextChapter');
         }
 
         /**
@@ -113,10 +115,59 @@ $(function() {
             }
 
             if (chapterId) {
+                // 如果有章节 ID，直接加载
                 this.loadChapter(chapterId);
             } else if (novelId) {
-                // 如果只有小说 ID，加载第一章或上次阅读位置
-                this.loadLastReadPosition(novelId);
+                // 只有小说 ID，先加载章节列表，然后加载第一章
+                this.loadNovelChapters(novelId).then(() => {
+                    if (this.chapters.length > 0) {
+                        // 尝试从本地存储恢复阅读进度
+                        const progressKey = READER_CONFIG.storageKeys.progress + novelId;
+                        const savedProgress = Storage.get(progressKey);
+
+                        if (savedProgress && savedProgress.chapterId) {
+                            this.loadChapter(savedProgress.chapterId).then(() => {
+                                if (savedProgress.scrollPosition) {
+                                    setTimeout(() => {
+                                        smoothScrollTo(savedProgress.scrollPosition, 0);
+                                    }, 300);
+                                }
+                            });
+                        } else {
+                            // 没有保存的进度，加载第一章
+                            this.loadChapter(this.chapters[0]._id);
+                        }
+                    }
+                });
+            } else {
+                // 如果都没有，尝试获取第一本小说
+                this.loadFirstNovel();
+            }
+        }
+
+        /**
+         * 加载第一本小说（演示用）
+         */
+        async loadFirstNovel() {
+            try {
+                showToast('正在获取小说列表...');
+                const response = await fetch('http://localhost:6001/api/novels?limit=1');
+                const result = await response.json();
+
+                if (result.code === 0 && result.data.list.length > 0) {
+                    const firstNovel = result.data.list[0];
+                    this.currentNovelId = firstNovel._id;
+                    showToast(`正在加载: ${firstNovel.title}`);
+
+                    // 加载章节列表
+                    await this.loadNovelChapters(firstNovel._id);
+                    if (this.chapters.length > 0) {
+                        await this.loadChapter(this.chapters[0]._id);
+                    }
+                }
+            } catch (error) {
+                console.error('加载失败:', error);
+                showToast('加载失败，请确保后端服务已启动');
             }
         }
 
@@ -160,7 +211,15 @@ $(function() {
             try {
                 showToast('加载中...');
 
-                const chapterData = await api.chapters.get(chapterId);
+                // 直接使用 fetch，因为 api.js 使用了 /api 前缀，这里需要完整地址
+                const response = await fetch(`http://localhost:6001/api/chapters/${chapterId}`);
+                const result = await response.json();
+
+                if (result.code !== 0) {
+                    throw new Error(result.message || '加载失败');
+                }
+
+                const chapterData = result.data;
 
                 this.currentChapterId = chapterId;
                 this.currentChapterOrder = chapterData.order;
@@ -179,7 +238,7 @@ $(function() {
                 this.$contentInner.html(contentHtml);
 
                 // 滚动到顶部
-                scrollToChapterTop();
+                setTimeout(() => scrollToChapterTop(), 100);
 
                 // 更新导航按钮状态
                 this.updateNavButtons();
@@ -199,12 +258,19 @@ $(function() {
          */
         async loadNovelChapters(novelId) {
             try {
-                const result = await api.novels.chapters(novelId);
-                this.chapters = result.list || [];
-                this.totalChapters = result.total || 0;
-                this.renderChapterList();
+                const response = await fetch(`http://localhost:6001/api/novels/${novelId}/chapters?limit=100`);
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    this.chapters = result.data.list || [];
+                    this.totalChapters = result.data.total || 0;
+                    this.renderChapterList();
+                    return this.chapters;
+                }
+                return [];
             } catch (error) {
                 console.error('Failed to load chapter list:', error);
+                return [];
             }
         }
 
@@ -227,8 +293,8 @@ $(function() {
          * 更新导航按钮状态
          */
         updateNavButtons() {
-            $('#prevChapter').get(0).disabled = this.currentChapterOrder <= 1;
-            $('#nextChapter').get(0).disabled = this.currentChapterOrder >= this.totalChapters;
+            this.$prevBtn.get(0).disabled = this.currentChapterOrder <= 1;
+            this.$nextBtn.get(0).disabled = this.currentChapterOrder >= this.totalChapters;
         }
 
         /**
@@ -278,7 +344,7 @@ $(function() {
             if (nextChapter) {
                 try {
                     console.log('Preloading next chapter...');
-                    await api.chapters.get(nextChapter._id);
+                    await fetch(`http://localhost:6001/api/chapters/${nextChapter._id}`);
                     this.nextChapterPreloaded = true;
                     showToast('下一章已预加载', 1000);
                 } catch (error) {
@@ -324,25 +390,6 @@ $(function() {
                 scrollPosition: scrollY,
                 timestamp: Date.now(),
             });
-
-            // 同步到服务器（如果已登录）
-            this.syncProgressToServer();
-        }
-
-        /**
-         * 同步进度到服务器
-         */
-        async syncProgressToServer() {
-            try {
-                await api.progress.sync({
-                    novelId: this.currentNovelId,
-                    chapterId: this.currentChapterId,
-                    chapterOrder: this.currentChapterOrder,
-                    scrollPosition: window.scrollY || document.documentElement.scrollTop,
-                });
-            } catch (error) {
-                // 静默失败
-            }
         }
 
         /**

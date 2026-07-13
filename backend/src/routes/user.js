@@ -1,13 +1,22 @@
 const Router = require('koa-router');
-const { updateProfile, updateSettings } = require('../controllers/userController');
-const { auth } = require('../middleware/auth');
+const {
+  updateProfile,
+  updateSettings,
+  getSettings,
+  changePassword,
+  getPublicProfile,
+} = require('../controllers/userController');
+const { requireLogin } = require('../middleware/permission');
 
 const router = new Router({ prefix: '/user' });
 
-// 更新用户信息
-router.put('/profile', auth, updateProfile);
+// 获取用户公开信息（不需要登录，或需要登录看其他用户）
+router.get('/profile/:id', getPublicProfile);
 
-// 更新阅读设置
-router.put('/settings', auth, updateSettings);
+// 以下需要登录
+router.put('/profile', requireLogin, updateProfile);
+router.get('/settings', requireLogin, getSettings);
+router.put('/settings', requireLogin, updateSettings);
+router.put('/password', requireLogin, changePassword);
 
 module.exports = router;

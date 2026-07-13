@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="referrer" content="no-referrer">
-    <title>小说阅读器</title>
+    <title>小说阅读器 - BookStation</title>
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/layout.css">
@@ -15,13 +15,13 @@
     <!-- 顶部导航栏 -->
     <header class="reader-header" id="header">
         <div class="header-content">
-            <button class="icon-btn" id="backBtn">
+            <button class="icon-btn" id="backBtn" title="返回">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
             </button>
             <h1 class="novel-title" id="novelTitle">加载中...</h1>
-            <button class="icon-btn" id="menuBtn">
+            <button class="icon-btn" id="menuBtn" title="设置">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="6" r="1"/>
                     <circle cx="12" cy="12" r="1"/>
@@ -33,13 +33,19 @@
 
     <!-- 章节标题 -->
     <div class="chapter-title-container" id="chapterTitleContainer">
-        <h2 class="chapter-title" id="chapterTitle">第一章 初入江湖</h2>
+        <h2 class="chapter-title" id="chapterTitle">第1章 示例章节</h2>
     </div>
 
     <!-- 阅读内容区域 -->
     <main class="reader-content" id="readerContent">
         <div class="content-inner" id="contentInner">
-            <p>正在加载章节内容...</p>
+            <div class="loading" style="text-align: center; padding: 60px;">
+                <div class="spinner"></div>
+                <p style="margin-top: 16px; color: #999;">正在加载章节内容...</p>
+                <p style="font-size: 13px; color: #ccc; margin-top: 8px;">
+                    💡 请确保后端服务已启动，并已执行 <code>node seed-data.js</code> 插入测试数据
+                </p>
+            </div>
         </div>
     </main>
 
@@ -59,7 +65,7 @@
             <span>目录</span>
         </button>
         <button class="nav-btn" id="settingsBtn">
-            <span class="nav-icon">⚙️</span>
+            <span class="nav-icon">⚙</span>
             <span>设置</span>
         </button>
         <button class="nav-btn" id="nextChapter">
@@ -87,7 +93,7 @@
             </div>
 
             <div class="setting-section">
-                <label class="setting-label">行间距: <span id="lineHeightValue">1.8</span></label>
+                <label class="setting-label">行高: <span id="lineHeightValue">1.8</span></label>
                 <div class="setting-control">
                     <input type="range" id="lineHeightSlider" min="1.4" max="2.5" value="1.8" step="0.1">
                 </div>
@@ -114,11 +120,11 @@
             <div class="setting-section">
                 <label class="setting-label">背景颜色</label>
                 <div class="bg-selector">
-                    <button class="bg-btn active" data-bg="#ffffff" style="background: #ffffff"></button>
-                    <button class="bg-btn" data-bg="#f5f5dc" style="background: #f5f5dc"></button>
-                    <button class="bg-btn" data-bg="#e8f4e8" style="background: #e8f4e8"></button>
-                    <button class="bg-btn" data-bg="#f0e8d9" style="background: #f0e8d9"></button>
-                    <button class="bg-btn" data-bg="#1a1a1a" style="background: #1a1a1a"></button>
+                    <button class="bg-btn active" data-bg="#ffffff" style="background: #ffffff;"></button>
+                    <button class="bg-btn" data-bg="#f5f5dc" style="background: #f5f5dc;"></button>
+                    <button class="bg-btn" data-bg="#e8f4e8" style="background: #e8f4e8;"></button>
+                    <button class="bg-btn" data-bg="#f0e8d9" style="background: #f0e8d9;"></button>
+                    <button class="bg-btn" data-bg="#1a1a1a" style="background: #1a1a1a;"></button>
                 </div>
             </div>
 

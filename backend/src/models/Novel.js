@@ -46,10 +46,20 @@ const novelSchema = new mongoose.Schema({
     id: mongoose.Schema.Types.ObjectId,
     updateTime: Date,
   },
+  // 作者信息（原创作者）
+  authorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    index: true,
+  },
   source: {
     name: String,
     url: String,
     novelId: String,
+    isOriginal: {
+      type: Boolean,
+      default: false,
+    },
   },
   tags: [{
     type: String,

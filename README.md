@@ -153,7 +153,7 @@ cd backend
 npm install
 npm run dev
 
-# 5. 打开浏览器访问 http://localhost:3000
+# 5. 打开浏览器访问 http://localhost:6002
 ```
 
 ### 方式二：手动安装
@@ -188,8 +188,8 @@ pip install -r requirements.txt
 ```bash
 # 使用任意静态服务器
 cd frontend/reader
-python -m http.server 8080
-# 访问 http://localhost:8080
+python -m http.server 6002
+# 访问 http://localhost:6002
 ```
 
 ## 📖 API 文档
@@ -271,7 +271,7 @@ REDIS_PASSWORD=redis_password
 JWT_SECRET=your-secret-key-change-in-production
 
 # 服务端口
-PORT=3000
+PORT=6001
 ```
 
 ### 爬虫配置
